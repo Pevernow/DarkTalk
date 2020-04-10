@@ -1,16 +1,18 @@
+import queue
 import threading
 
 import crypto
-import tools
+import httpmgr
 import udp
 
+q = queue.Queue()
+message = queue.Queue()
 ecc1 = crypto.ECC()
-udps = threading.Thread(target=udp.udpserver, args=(ecc1, 6666))
+udps = threading.Thread(target=udp.udpserver, args=(ecc1, q, message, 6666))
+mgr = threading.Thread(target=httpmgr.startmgr, args=(message, 8000))
 udps.setDaemon(True)
+mgr.setDaemon(True)
 udps.start()
-ecc2 = crypto.ECC()
-client = udp.udpclient()
-client.udpsend(tools.json_public_key(ecc2.GetPublicKey()), "127.0.0.1", 6666)
-a = crypto.AESCrypto
-client.udpsend(tools.json_public_key(ecc2.GetPublicKey()), "127.0.0.1", 6666)
+mgr.start()
 udps.join()
+mgr.join()
